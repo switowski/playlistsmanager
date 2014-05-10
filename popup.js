@@ -52,7 +52,7 @@ var playlistManager = {
                                 artist: track['artist']['name'],
                                 album: track['album']['title']
                             };
-                console.log(song.title); 
+                console.log(song.title);
                 songs.push(song);
             }
             var text = "{  \"playlistName\":\"" + name + "\",\n";
@@ -83,10 +83,22 @@ var playlistManager = {
 
     // parse the HTML, grab all metadata about songs and create XML files
     var $HTMLPage = $.parseHTML(this.HTMLPage);
-    console.log($HTMLPage);
 
     // Get the playlist name
-    playlistJSON.playlistName = $('#playlist-title', $HTMLPage);
+    playlistJSON.playlistName = $('#playlist-title', $HTMLPage).text();
+
+    // Sometimes the HTML loads slowly (it's asynchronous, so even window.onload doesn't help),
+    // so if we run the plugin too fast, the playlist will be empty. In that case let's wait a moment and call this function again.
+    if (! $(".module-row-header", $HTMLPage).length) {
+      // Wait a moment
+      window.setTimeout(function() {
+        // Reload the HTML
+        onWindowLoad();
+        // Re-parse the Grooveshark data
+        playlistManager.parseGrooveshark();
+      }, 1000);
+    }
+
     playlistJSON.playlistSongs = []
 
     var arraySongs = $('.module-row', $HTMLPage).filter('.song');
@@ -107,8 +119,6 @@ var playlistManager = {
 chrome.extension.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
     playlistManager.HTMLPage = request.source;
-    // HTML received, run functions
-    playlistManager.createInterface();
   }
 });
 
@@ -128,4 +138,7 @@ function onWindowLoad() {
 
 }
 
-window.onload = onWindowLoad;
+window.onload = function () {
+  onWindowLoad;
+  playlistManager.createInterface();
+}
