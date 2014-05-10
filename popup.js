@@ -32,7 +32,7 @@ var playlistManager = {
     if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
       // We are on Grooveshark website with a playlist
       console.log('Grooveshark website !');
-      playlistManager.parseGrooveshark();
+      var GrooversharkJSON = playlistManager.parseGrooveshark();
     } else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
       var playlist_id = activeUrl.split('/');
       playlist_id = playlist_id[playlist_id.length - 1];
@@ -97,21 +97,22 @@ var playlistManager = {
         // Re-parse the Grooveshark data
         playlistManager.parseGrooveshark();
       }, 1000);
+    } else {
+
+      playlistJSON.playlistSongs = []
+
+      var arraySongs = $('.module-row', $HTMLPage).filter('.song');
+      $.each(arraySongs, function(index, value) {
+        var songJSON = new Object();
+        songJSON.title = $('.song span', value).text();
+        songJSON.artist = $('.artist a', value).text();
+        songJSON.album = $('.album a', value).text();
+        playlistJSON.playlistSongs.push(songJSON);
+      });
+      console.log(JSON.stringify(playlistJSON));
+
+      return JSON.stringify(playlistJSON);
     }
-
-    playlistJSON.playlistSongs = []
-
-    var arraySongs = $('.module-row', $HTMLPage).filter('.song');
-    console.log(arraySongs);
-    $.each(arraySongs, function(index, value) {
-      var songJSON = new Object();
-      console.log($('.song span', value).text());
-      songJSON.title = $('.song span', value).text();
-      songJSON.artist = $('.artist a', value).text();
-      songJSON.album = $('.album a', value).text();
-      playlistJSON.playlistSongs.push(songJSON);
-    });
-    console.log(playlistJSON);
   }
 };
 
