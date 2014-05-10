@@ -119,7 +119,36 @@ var playlistManager = {
   }
 };
 
+/*
 // Run the script when the document's DOM is ready.
 document.addEventListener('DOMContentLoaded', function () {
   playlistManager.createInterface();
 });
+*/
+
+chrome.extension.onMessage.addListener(function(request, sender) {
+  if (request.action == "getSource") {
+    var HTMLPage = request.source;
+    // HTML received, run functions
+    
+  }
+});
+
+function onWindowLoad() {
+
+  var message = document.querySelector('#message');
+
+  chrome.tabs.executeScript(null, {
+    file: "getPagesSource.js"
+  }, function() {
+    // If you try and inject into an extensions page or the webstore/NTP you'll get an error
+    if (chrome.extension.lastError) {
+      // TODO There was an error, the HTML source was not received, do something !
+      console.log("There was an error retrieving HTML source");
+      console.log(chrome.extension.lastError);
+    }
+  });
+
+}
+
+window.onload = onWindowLoad;

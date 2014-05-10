@@ -5,7 +5,7 @@
   "description": "This extension is to export playlists from some popular music streaming websites.",
   "version": "1.0",
   "permissions": [
-    "tabs"
+    "tabs", "<all_urls>"
   ],
   "browser_action": {
     "default_icon": "icon.png",
