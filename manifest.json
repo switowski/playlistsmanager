@@ -5,9 +5,6 @@
   "description": "This extension is to export playlists from some popular music streaming websites.",
   "version": "1.0",
 
-  "permissions": [
-    "http://grooveshark.com/"
-  ],
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html"
