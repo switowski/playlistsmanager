@@ -98,11 +98,46 @@ var playlistManager = {
     var activeUrl = tab[0].url;
     if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
       // We are on Grooveshark website with a playlist
+      alert('I am happy');s
       console.log(activeUrl);
       console.log('Grooveshark website !');
-    } else if (activeUrl.indexOf('deezer') > -1) {
+    } /*else if (activeUrl.indexOf('deezer') > -1) {
+      document.getElementById('info').innerHTML = 'DEEZER'
       // We are on Deezer website
-    } else if (activeUrl.indexOf('deezer') > -1) {
+    }*/ else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
+      var playlist_id = activeUrl.split('/');
+      playlist_id = playlist_id[playlist_id.length - 1];
+      var url = 'http://api.deezer.com/playlist/' + playlist_id;
+      $.get(
+          url,
+          {},
+          function(data) {
+            var name = data['title'];
+            var tracks = data['tracks']['data'];
+            console.log(tracks)
+            var songs = [];
+            for (var track in tracks){
+                track = tracks[track]
+                console.log(track['title']);
+                var song = {    title: track['title'],
+                                artist: track['artist']['name'],
+                                album: track['album']['title']
+                            };
+                console.log(song.title); 
+                songs.push(song);
+            }
+            var text = "{  \"playlistName\":\"" + name + "\",\n";
+            text += "\"playlistSongs\":[\n"
+            for (var song in songs){
+                song = songs[song]
+                text += "{\"title\":\"" + song.title + "\", \"artist\":\"" + song.artist + "\", \"album\":\"" + song.album + "\"},\n";
+            }
+            text = text.substring(0, text.length - 2)
+            text += "\n]\n}"
+            alert(text);
+          }
+
+      );
       // We are on Spotify website
     } else {
       // We are on different website, we can't perform anything here
@@ -119,12 +154,12 @@ var playlistManager = {
   }
 };
 
-/*
+
 // Run the script when the document's DOM is ready.
 document.addEventListener('DOMContentLoaded', function () {
   playlistManager.createInterface();
 });
-*/
+
 
 chrome.extension.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
