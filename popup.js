@@ -96,7 +96,7 @@ var playlistManager = {
   chrome.tabs.query({active: true, currentWindow: true}, function(tab) {
     // this functions is async so call other functions based on the url here, not outside of this function
     var activeUrl = tab[0].url;
-    if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1))) {
+    if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
       // We are on Grooveshark website with a playlist
       console.log(activeUrl);
       console.log('Grooveshark website !');
