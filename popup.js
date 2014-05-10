@@ -1,86 +1,19 @@
-// Copyright (c) 2012 The Chromium Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-/**
- * Global variable containing the query we'd like to pass to Flickr. In this
- * case, kittens!
- *
- * @type {string}
- */
+// Copyright (c) 2014 Sebastian Witowski and Giorgos Papoutsakis
 'use strict';
 
-var QUERY = 'kittens';
-
-var kittenGenerator = {
-  /**
-   * Flickr URL that will give us lots and lots of whatever we're looking for.
-   *
-   * See http://www.flickr.com/services/api/flickr.photos.search.html for
-   * details about the construction of this URL.
-   *
-   * @type {string}
-   * @private
-   */
-  searchOnFlickr_: 'https://secure.flickr.com/services/rest/?' +
-      'method=flickr.photos.search&' +
-      'api_key=90485e931f687a9b9c2a66bf58a3861a&' +
-      'text=' + encodeURIComponent(QUERY) + '&' +
-      'safe_search=1&' +
-      'content_type=1&' +
-      'sort=interestingness-desc&' +
-      'per_page=20',
-
-  /**
-   * Sends an XHR GET request to grab photos of lots and lots of kittens. The
-   * XHR's 'onload' event is hooks up to the 'showPhotos_' method.
-   *
-   * @public
-   */
-  requestKittens: function() {
-    var req = new XMLHttpRequest();
-    req.open('GET', this.searchOnFlickr_, true);
-    req.onload = this.showPhotos_.bind(this);
-    req.send(null);
-  },
-
-  /**
-   * Handle the 'onload' event of our kitten XHR request, generated in
-   * 'requestKittens', by generating 'img' elements, and stuffing them into
-   * the document for display.
-   *
-   * @param {ProgressEvent} e The XHR ProgressEvent.
-   * @private
-   */
-  showPhotos_: function (e) {
-    var kittens = e.target.responseXML.querySelectorAll('photo');
-    for (var i = 0; i < kittens.length; i++) {
-      var img = document.createElement('img');
-      img.src = this.constructKittenURL_(kittens[i]);
-      img.setAttribute('alt', kittens[i].getAttribute('title'));
-      document.body.appendChild(img);
-    }
-  },
-
-  /**
-   * Given a photo, construct a URL using the method outlined at
-   * http://www.flickr.com/services/api/misc.urlKittenl
-   *
-   * @param {DOMElement} A kitten.
-   * @return {string} The kitten's URL.
-   * @private
-   */
-  constructKittenURL_: function (photo) {
-    return 'http://farm' + photo.getAttribute('farm') +
-        '.static.flickr.com/' + photo.getAttribute('server') +
-        '/' + photo.getAttribute('id') +
-        '_' + photo.getAttribute('secret') +
-        '_s.jpg';
-  }
-};
-
+/*
+Structure of export JSON:
+{
+playlistName: "Some name",
+playlistSongs: [{title: "song title", artist: "artist name", album: "album name"},
+                 {title: "song title", artist: "artist name", album: "album name"}, ...]
+}
+*/
 
 var playlistManager = {
+  // variable to store HTML source page
+  HTMLPage: "",
+
   // Create interface
   createInterface: function(){
     // The box is made by popup.html, we just need to create buttons here
@@ -92,17 +25,17 @@ var playlistManager = {
   },
 
   exportPlaylist: function () {
-  // Function that is called when 'Export playlist' button is clicked
-  chrome.tabs.query({active: true, currentWindow: true}, function(tab) {
+    // Function that is called when 'Export playlist' button is clicked
+    chrome.tabs.query({active: true, currentWindow: true}, function(tab) {
     // this functions is async so call other functions based on the url here, not outside of this function
     var activeUrl = tab[0].url;
     if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
       // We are on Grooveshark website with a playlist
-      console.log(activeUrl);
       console.log('Grooveshark website !');
+      playlistManager.parseGrooveshark();
     } else if (activeUrl.indexOf('deezer') > -1) {
       // We are on Deezer website
-    } else if (activeUrl.indexOf('deezer') > -1) {
+    } else if (activeUrl.indexOf('spotify') > -1) {
       // We are on Spotify website
     } else {
       // We are on different website, we can't perform anything here
@@ -114,23 +47,36 @@ var playlistManager = {
   },
 
   parseGrooveshark: function () {
-  // parse the HTML, grab all metadata about songs and create XML files
-  $('.module-row').filter('.song');
+    var playlistJSON = new Object();
+
+    // parse the HTML, grab all metadata about songs and create XML files
+    var $HTMLPage = $.parseHTML(this.HTMLPage);
+    console.log($HTMLPage);
+
+    // Get the playlist name
+    playlistJSON.playlistName = $('#playlist-title', $HTMLPage);
+    playlistJSON.playlistSongs = []
+
+    var arraySongs = $('.module-row', $HTMLPage).filter('.song');
+    console.log(arraySongs);
+    $.each(arraySongs, function(index, value) {
+      var songJSON = new Object();
+      console.log($('.song span', value).text());
+      songJSON.title = $('.song span', value).text();
+      songJSON.artist = $('.artist a', value).text();
+      songJSON.album = $('.album a', value).text();
+      playlistJSON.playlistSongs.push(songJSON);
+    });
+    console.log(playlistJSON);
   }
 };
 
-/*
-// Run the script when the document's DOM is ready.
-document.addEventListener('DOMContentLoaded', function () {
-  playlistManager.createInterface();
-});
-*/
 
 chrome.extension.onMessage.addListener(function(request, sender) {
   if (request.action == "getSource") {
-    var HTMLPage = request.source;
+    playlistManager.HTMLPage = request.source;
     // HTML received, run functions
-    
+    playlistManager.createInterface();
   }
 });
 
@@ -145,7 +91,6 @@ function onWindowLoad() {
     if (chrome.extension.lastError) {
       // TODO There was an error, the HTML source was not received, do something !
       console.log("There was an error retrieving HTML source");
-      console.log(chrome.extension.lastError);
     }
   });
 
