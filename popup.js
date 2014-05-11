@@ -11,10 +11,11 @@ playlistSongs: [{title: "song title", artist: "artist name", album: "album name"
 }
 */
 
+var access_token = 'frWjnMytX4536eddfd3eb8btkmrziCs536eddfd3ebc4ymSBBTd'
+
 function save_to_file(text) {
     window.open('data:text/csv;charset=utf-8,' + escape(text));
 }
-
 
 var playlistManager = {
   // variable to store HTML source page
@@ -34,30 +35,15 @@ var playlistManager = {
     playlist.value = 'insert a url to a playlist'
     playlist.onclick = function(){
         if (this.value == 'insert a url to a playlist'){
-            this.value = ''
+            this.value = '';
         }
+        this.focus();
     }
     var upload =  document.createElement('button');
     upload.textContent = 'Import to Deezer';
     upload.onclick = this.import_to_Deezer;
     document.body.appendChild(playlist);
     document.body.appendChild(upload);
-   /* var form = document.createElement('form');
-    form.action = this.import_to_Deezer
-    var file = document.createElement('input');
-    file.type = 'file'
-    var submit = document.createElement('input');
-    submit.type = 'submit'
-    form.appendChild(file)
-    form.appendChild(submit)
-    document.body.appendChild(form);*/
-  
-
-    /*importbtn.type = 'button'
-    importbtn.value = 'Import to Deezer'
-    importbtn.id = 'upload'
-    importbtn.onclick = this.import_to_Deezer
-    document.body.appendChild(importbtn)*/
   },
 
   exportPlaylist: function () {
@@ -66,66 +52,142 @@ var playlistManager = {
       // this functions is async so call other functions based on the url here, not outside of this function
       var activeUrl = tab[0].url;
       if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
-        // We are on Grooveshark website with a playlist
-        console.log('Grooveshark website !');
-        var GrooversharkJSON = playlistManager.parseGrooveshark(activeUrl);
+            // We are on Grooveshark website with a playlist
+            console.log('Grooveshark website !');
+            playlistManager.parseGrooveshark();
       } else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
-        var playlist_id = activeUrl.split('/');
-        playlist_id = playlist_id[playlist_id.length - 1];
-        var url = 'http://api.deezer.com/playlist/' + playlist_id;
-        $.get(
-            url,
-            {},
-            function(data) {
-              var name = data['title'];
-              var tracks = data['tracks']['data'];
-              var songs = [];
-              for (var track in tracks){
-                  track = tracks[track]
-                  var song = {    title: track['title'],
-                                  artist: track['artist']['name'],
-                                  album: track['album']['title']
-                              };
-                  songs.push(song);
-              }
-              var text = "{  \"playlistName\":\"" + name + "\",\n";
-              text += "\t\"playlistSongs\":[\n"
-              for (var song in songs){
-                  song = songs[song]
-                  text += "\t\t{\"title\":\"" + song.title + "\", \"artist\":\"" + song.artist + "\", \"album\":\"" + song.album + "\"},\n";
-              }
-              text = text.substring(0, text.length - 2)
-              text += "\n\t]\n}"
-              save_to_file(text)
-            }
-
-        );
-      } else if (activeUrl.indexOf('spotify') > -1) {
-          // We are on Spotify website
-          console.log('Spotify website !');
-          var SpotifyJSON = playlistManager.parseSpotify();
-      } else {
-        // We are on different website, we can't perform anything here
-        alert('Sorry but this page is unsupported yet. Our programmers are working day and night so you will be able to export music from ' + activeUrl + ' in the nearest future.');
-        // TODO replace this stupid alert with HTML added to extension bubble that is displayed for 10 seconds and disappears later
-      }
-    });
+            var playlist_id = activeUrl.split('/');
+            playlist_id = playlist_id[playlist_id.length - 1];
+            var url = 'http://api.deezer.com/playlist/' + playlist_id;
+            $.get(url,
+                  {},
+                  function(data) {
+                    var name = data['title'];
+                    var tracks = data['tracks']['data'];
+                    var songs = [];
+                    for (var track in tracks){
+                        track = tracks[track]
+                        var song = {    title: track['title'],
+                                        artist: track['artist']['name'],
+                                        album: track['album']['title']
+                                    };
+                        songs.push(song);
+                    }
+                    text = "{  \"playlistName\":\"" + name + "\",\n";
+                    text += "\t\"playlistSongs\":[\n"
+                    for (var song in songs){
+                        song = songs[song]
+                        text += "\t\t{\"title\":\"" + song.title + "\", \"artist\":\"" + song.artist + "\", \"album\":\"" + song.album + "\"},\n";
+                    }
+                    text = text.substring(0, text.length - 2)
+                    text += "\n\t]\n}"
+                    save_to_file(text)
+                  });
+    } else if (activeUrl.indexOf('spotify') > -1) {
+      // We are on Spotify website
+    } else {
+      // We are on different website, we can't perform anything here
+      alert('Sorry but this page is unsupported yet. Our programmers are working day and night so you will be able to export music from ' + activeUrl + ' in the nearest future.');
+      // TODO replace this stupid alert with HTML added to extension bubble that is displayed for 10 seconds and disappears later
+    }
+  });
   },
 
   import_to_Deezer: function(){
     var url = document.getElementById('playlist').value
-    if (url != 'insert a url to a playlist'){
-        alert(url)
-        $.get(
-          url,
-          {},
-          function(data) {
-            alert(data)
-          });
+    if (url != 'insert a url to a playlist') {
+        if ((url.indexOf('grooveshark') > -1) && (url.indexOf('/playlist/') > -1)) {
+            // parse the HTML, grab all metadata about songs and create XML files
+            var $HTMLPage = $.parseHTML(this.HTMLPage);
+
+            // Get the playlist name
+            var playlistName = $('#playlist-title', $HTMLPage).text();
+
+            // Sometimes the HTML loads slowly (it's asynchronous, so even window.onload doesn't help),
+            // so if we run the plugin too fast, the playlist will be empty. In that case let's wait a moment and call this function again.
+            if (! $(".module-row-header", $HTMLPage).length) {
+              // Wait a moment
+              window.setTimeout(function() {
+                // Reload the HTML
+                onWindowLoad();
+                // Re-parse the Grooveshark data
+                playlistManager.import_to_Deezer();
+              }, 1000);
+            } else {
+                $.post('http://api.deezer.com/user/393724495/playlists',
+                        {'title': playlistName, 'access_token': access_token},
+                        function(id){
+                            var arraySongs = $('.module-row', $HTMLPage).filter('.song');
+                            $.each(arraySongs, function(index, value) {
+                                var songJSON = new Object();
+                                var title = $('.song span', value).text();
+                                var artist = $('.artist a', value).text();
+                                var album = $('.album a', value).text();
+                                var query = title 
+                                $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
+                                    {},
+                                    function(result){
+                                        var data = result['data'];
+                                        if (data.length > 0){
+                                            var songid = data[0]['id']
+                                            console.log(songid)
+                                            console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
+                                            $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
+                                                {'access_token': access_token, 'songs': songid},
+                                                function(addsong){
+                                                    console.log(addsong)
+                                                });
+                                        }
+                                        console.log(result);
+                                    });
+                            });                
+                    });
+            }
+        } else if ((url.indexOf('deezer') > -1) && (url.indexOf('/playlist/') > -1)) {
+            var playlist_id = url.split('/');
+            playlist_id = playlist_id[playlist_id.length - 1];
+            url = 'http://api.deezer.com/playlist/' + playlist_id;
+            $.get(url,
+                {},
+                function(data) {
+                    var name = data['title'];
+                    $.post('http://api.deezer.com/user/393724495/playlists',
+                        {'title': name, 'access_token': access_token},
+                        function(id){
+                            var tracks = data['tracks']['data'];
+                            var songs = [];
+                            for (var track in tracks){
+                                track = tracks[track];
+                                var title = track['title'];
+                                var artist = track['artist']['name'];
+                                var album = track['album']['title'];
+                                var query = title 
+                                $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
+                                        {},
+                                      function(result){
+                                            data = result['data'];
+                                            if (data.length > 0){
+                                                var songid = data[0]['id']
+                                                console.log(songid)
+                                                console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
+                                                $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
+                                                    {'access_token': access_token, 'songs': songid},
+                                                    function(addsong){
+                                                        console.log(addsong)
+                                                    });
+                                            }
+                                            console.log(result);
+                                      });
+                                }
+                            }
+                    );
+                }
+            );
+        }
     }
   },
 
-  parseGrooveshark: function (activeUrl) {
+  parseGrooveshark: function (url) {
     var playlistJSON = new Object();
 
     // parse the HTML, grab all metadata about songs and create XML files
@@ -158,8 +220,7 @@ var playlistManager = {
         playlistJSON.playlistSongs.push(songJSON);
       });
       console.log(JSON.stringify(playlistJSON));
-
-      return JSON.stringify(playlistJSON);
+      save_to_file(playlistJSON);
     }
   }
 };
