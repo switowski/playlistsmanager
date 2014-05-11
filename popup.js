@@ -170,8 +170,8 @@ var playlistManager = {
                         {'title': name, 'access_token': access_token},
                         function(id){
                             var div = document.createElement('div');
-                            div.textContent = 'Import completed!';
-                            document.body.appendChild(div);
+                                div.textContent = 'Import completed!';
+                                document.body.appendChild(div);                                
                             var tracks = data['tracks']['data'];
                             var songs = [];
                             for (var track in tracks){
