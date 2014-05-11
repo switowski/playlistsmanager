@@ -27,54 +27,54 @@ var playlistManager = {
   exportPlaylist: function () {
     // Function that is called when 'Export playlist' button is clicked
     chrome.tabs.query({active: true, currentWindow: true}, function(tab) {
-    // this functions is async so call other functions based on the url here, not outside of this function
-    var activeUrl = tab[0].url;
-    if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
-      // We are on Grooveshark website with a playlist
-      console.log('Grooveshark website !');
-      var GrooversharkJSON = playlistManager.parseGrooveshark();
-    } else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
-      var playlist_id = activeUrl.split('/');
-      playlist_id = playlist_id[playlist_id.length - 1];
-      var url = 'http://api.deezer.com/playlist/' + playlist_id;
-      $.get(
-          url,
-          {},
-          function(data) {
-            var name = data['title'];
-            var tracks = data['tracks']['data'];
-            console.log(tracks)
-            var songs = [];
-            for (var track in tracks){
-                track = tracks[track]
-                console.log(track['title']);
-                var song = {    title: track['title'],
-                                artist: track['artist']['name'],
-                                album: track['album']['title']
-                            };
-                console.log(song.title);
-                songs.push(song);
+      // this functions is async so call other functions based on the url here, not outside of this function
+      var activeUrl = tab[0].url;
+      if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
+        // We are on Grooveshark website with a playlist
+        console.log('Grooveshark website !');
+        var GrooversharkJSON = playlistManager.parseGrooveshark();
+      } else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
+        var playlist_id = activeUrl.split('/');
+        playlist_id = playlist_id[playlist_id.length - 1];
+        var url = 'http://api.deezer.com/playlist/' + playlist_id;
+        $.get(
+            url,
+            {},
+            function(data) {
+              var name = data['title'];
+              var tracks = data['tracks']['data'];
+              console.log(tracks)
+              var songs = [];
+              for (var track in tracks){
+                  track = tracks[track]
+                  console.log(track['title']);
+                  var song = {    title: track['title'],
+                                  artist: track['artist']['name'],
+                                  album: track['album']['title']
+                              };
+                  console.log(song.title);
+                  songs.push(song);
+              }
+              var text = "{  \"playlistName\":\"" + name + "\",\n";
+              text += "\"playlistSongs\":[\n"
+              for (var song in songs){
+                  song = songs[song]
+                  text += "{\"title\":\"" + song.title + "\", \"artist\":\"" + song.artist + "\", \"album\":\"" + song.album + "\"},\n";
+              }
+              text = text.substring(0, text.length - 2)
+              text += "\n]\n}"
+              alert(text);
             }
-            var text = "{  \"playlistName\":\"" + name + "\",\n";
-            text += "\"playlistSongs\":[\n"
-            for (var song in songs){
-                song = songs[song]
-                text += "{\"title\":\"" + song.title + "\", \"artist\":\"" + song.artist + "\", \"album\":\"" + song.album + "\"},\n";
-            }
-            text = text.substring(0, text.length - 2)
-            text += "\n]\n}"
-            alert(text);
-          }
 
-      );
-    } else if (activeUrl.indexOf('spotify') > -1) {
-      // We are on Spotify website
-    } else {
-      // We are on different website, we can't perform anything here
-      alert('Sorry but this page is unsupported yet. Our programmers are working day and night so you will be able to export music from ' + activeUrl + ' in the nearest future.');
-      // TODO replace this stupid alert with HTML added to extension bubble that is displayed for 10 seconds and disappears later
-    }
-  });
+        );
+      } else if (activeUrl.indexOf('spotify') > -1) {
+        // We are on Spotify website
+      } else {
+        // We are on different website, we can't perform anything here
+        alert('Sorry but this page is unsupported yet. Our programmers are working day and night so you will be able to export music from ' + activeUrl + ' in the nearest future.');
+        // TODO replace this stupid alert with HTML added to extension bubble that is displayed for 10 seconds and disappears later
+      }
+    });
 
   },
 
