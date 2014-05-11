@@ -11,7 +11,8 @@ playlistSongs: [{title: "song title", artist: "artist name", album: "album name"
 }
 */
 
-var access_token = 'fr7tXVldvg536f17f7aa348FYZfHan0536f17f7aa3868kDoIc3'
+var access_token = 'frClViuuja536f5e4c0ff7bvqcYSvVH536f5e4c0ffb3YgdcEZs'
+var user_id = '393724495'
 
 function save_to_file(text) {
      var dataURL = 'data:text/json;charset=utf-8,' + escape(text)
@@ -35,20 +36,9 @@ var playlistManager = {
     btn.onclick = this.exportPlaylist;
     // var btn2 = $('<button>Import playlist</button>');
     document.body.appendChild(btn);
-    var playlist = document.createElement('input');
-    playlist.id = 'playlist'
-    playlist.type = 'text';
-    playlist.value = 'insert a url to a playlist'
-    playlist.onclick = function(){
-        if (this.value == 'insert a url to a playlist'){
-            this.value = '';
-        }
-        this.focus();
-    }
     var upload =  document.createElement('button');
     upload.textContent = 'Import to Deezer';
     upload.onclick = this.import_to_Deezer;
-    document.body.appendChild(playlist);
     document.body.appendChild(upload);
   },
 
@@ -99,70 +89,75 @@ var playlistManager = {
   });
   },
 
-  import_to_Deezer: function(){
-    var url = document.getElementById('playlist').value
-    if (url != 'insert a url to a playlist') {
-        if ((url.indexOf('grooveshark') > -1) && (url.indexOf('/playlist/') > -1)) {
-            // parse the HTML, grab all metadata about songs and create XML files
-            var $HTMLPage = $.parseHTML(this.HTMLPage);
-
-            // Get the playlist name
-            var playlistName = $('#playlist-title', $HTMLPage).text();
-
-            // Sometimes the HTML loads slowly (it's asynchronous, so even window.onload doesn't help),
-            // so if we run the plugin too fast, the playlist will be empty. In that case let's wait a moment and call this function again.
-            if (! $(".module-row-header", $HTMLPage).length) {
-              // Wait a moment
-              window.setTimeout(function() {
-                // Reload the HTML
-                onWindowLoad();
-                // Re-parse the Grooveshark data
-                playlistManager.import_to_Deezer();
-              }, 1000);
-            } else {
-                $.post('http://api.deezer.com/user/393724495/playlists',
-                        {'title': playlistName, 'access_token': access_token},
-                        function(id){
-                            var arraySongs = $('.module-row', $HTMLPage).filter('.song');
-                            var div = document.createElement('div');
-                            div.textContent = 'Import completed!';
-                            document.body.appendChild(div);
-                            $.each(arraySongs, function(index, value) {
-                                var songJSON = new Object();
-                                var title = $('.song span', value).text();
-                                var artist = $('.artist a', value).text();
-                                var album = $('.album a', value).text();
-                                var query = title
-                                console.log('QUERY    ' + query)
-                                $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
-                                    {},
-                                    function(result, title, album, artist){
-                                        var data = result['data'];
-                                        if (data.length > 0){
-                                            var songid = '';
-                                            for (var s in data){
-                                                var tit = data[s]['title'];
-                                                if (tit == title){
-                                                    songid = data[s]['id'];
-                                                    break;
-                                                }
-                                            }
-                                            if (songid == ''){
-                                                songid = data[0]['id'];
-                                            }
-                                            console.log(songid)
-                                            console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
-                                            $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
-                                                {'access_token': access_token, 'songs': songid},
-                                                function(addsong){
-                                                    console.log(addsong)
-                                                });
-                                        }
-                                        console.log(result);
+  from_Grooveshark_to_Deezer: function(){
+    // parse the HTML, grab all metadata about songs and create XML files
+    var $HTMLPage = $.parseHTML(this.HTMLPage);
+    // Get the playlist name
+    var playlistName = $('#playlist-title', $HTMLPage).text();
+    // Sometimes the HTML loads slowly (it's asynchronous, so even window.onload doesn't help),
+    // so if we run the plugin too fast, the playlist will be empty. In that case let's wait a moment and call this function again.
+    if (! $(".module-row-header", $HTMLPage).length) {
+      // Wait a moment
+      window.setTimeout(function() {
+        // Reload the HTML
+        onWindowLoad();
+        // Re-parse the Grooveshark data
+        playlistManager.from_Grooveshark_to_Deezer();
+      }, 1000);
+    } else {
+        $.post('http://api.deezer.com/user/' + user_id + '/playlists',
+            {'title': playlistName, 'access_token': access_token},
+            function(id){
+                var arraySongs = $('.module-row', $HTMLPage).filter('.song');
+                var div = document.createElement('div');
+                div.textContent = 'Import completed!';
+                document.body.appendChild(div);
+                $.each(arraySongs, function(index, value) {
+                    var songJSON = new Object();
+                    var title = $('.song span', value).text();
+                    var artist = $('.artist a', value).text();
+                    var album = $('.album a', value).text();
+                    var query = title
+                    console.log('QUERY    ' + query)
+                    $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
+                        {},
+                        function(result, title, album, artist){
+                            var data = result['data'];
+                            if (data.length > 0){
+                                var songid = '';
+                                for (var s in data){
+                                    var tit = data[s]['title'];
+                                    if (tit == title){
+                                        songid = data[s]['id'];
+                                        break;
+                                    }
+                                }
+                                if (songid == ''){
+                                    songid = data[0]['id'];
+                                }
+                                console.log(songid)
+                                console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
+                                $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
+                                    {'access_token': access_token, 'songs': songid},
+                                    function(addsong){
+                                        console.log(addsong)
                                     });
-                            });                
-                    });
-            }
+                            }
+                            console.log(result);
+                        });
+                });
+        });
+    }
+  },
+
+  import_to_Deezer: function(){
+     onWindowLoad();
+     chrome.tabs.query({active: true, currentWindow: true}, function(tab) {
+        // this functions is async so call other functions based on the url here, not outside of this function
+        var url = tab[0].url;
+        console.log(url)
+        if ((url.indexOf('grooveshark') > -1) && (url.indexOf('/playlist/') > -1)) {
+            playlistManager.from_Grooveshark_to_Deezer();            
         } else if ((url.indexOf('deezer') > -1) && (url.indexOf('/playlist/') > -1)) {
             var playlist_id = url.split('/');
             playlist_id = playlist_id[playlist_id.length - 1];
@@ -171,9 +166,12 @@ var playlistManager = {
                 {},
                 function(data) {
                     var name = data['title'];
-                    $.post('http://api.deezer.com/user/393724495/playlists',
+                    $.post('http://api.deezer.com/user/' + user_id + '/playlists',
                         {'title': name, 'access_token': access_token},
                         function(id){
+                            var div = document.createElement('div');
+                            div.textContent = 'Import completed!';
+                            document.body.appendChild(div);
                             var tracks = data['tracks']['data'];
                             var songs = [];
                             for (var track in tracks){
@@ -189,8 +187,10 @@ var playlistManager = {
                     );
                 }
             );
+        } else {
+             alert('Sorry but this page is unsupported yet. Our programmers are working day and night so you will be able to export music from ' + url + ' in the nearest future.');
         }
-    }
+    });
   },
 
   parseGrooveshark: function (url) {
