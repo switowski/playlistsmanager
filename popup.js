@@ -13,13 +13,14 @@ playlistSongs: [{title: "song title", artist: "artist name", album: "album name"
 
 var access_token = 'fr7tXVldvg536f17f7aa348FYZfHan0536f17f7aa3868kDoIc3'
 
-function decode(source){
-    var enc=encodeURIComponent(source)
-    return decodeURIComponent(enc)
-}
-
 function save_to_file(text) {
-    window.open('data:text/csv;charset=utf-8,' + escape(text));
+     var dataURL = 'data:text/json;charset=utf-8,' + escape(text)
+     var zipName = 'playlist.json'
+     chrome.downloads.download({
+            url:      dataURL,
+            filename: zipName,
+            saveAs:   true
+        });
 }
 
 var playlistManager = {
