@@ -124,6 +124,9 @@ var playlistManager = {
                         {'title': playlistName, 'access_token': access_token},
                         function(id){
                             var arraySongs = $('.module-row', $HTMLPage).filter('.song');
+                            var div = document.createElement('div');
+                            div.textContent = 'Import completed!';
+                            document.body.appendChild(div);
                             $.each(arraySongs, function(index, value) {
                                 var songJSON = new Object();
                                 var title = $('.song span', value).text();
