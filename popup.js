@@ -5,6 +5,7 @@
 Structure of export JSON:
 {
 playlistName: "Some name",
+playlistURL: "http://www.playlist.com/123123",
 playlistSongs: [{title: "song title", artist: "artist name", album: "album name"},
                  {title: "song title", artist: "artist name", album: "album name"}, ...]
 }
@@ -67,7 +68,7 @@ var playlistManager = {
       if ((activeUrl.indexOf('grooveshark') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
         // We are on Grooveshark website with a playlist
         console.log('Grooveshark website !');
-        var GrooversharkJSON = playlistManager.parseGrooveshark();
+        var GrooversharkJSON = playlistManager.parseGrooveshark(activeUrl);
       } else if ((activeUrl.indexOf('deezer') > -1) && (activeUrl.indexOf('/playlist/') > -1)) {
         var playlist_id = activeUrl.split('/');
         playlist_id = playlist_id[playlist_id.length - 1];
@@ -124,14 +125,15 @@ var playlistManager = {
     }
   },
 
-  parseGrooveshark: function () {
+  parseGrooveshark: function (activeUrl) {
     var playlistJSON = new Object();
 
     // parse the HTML, grab all metadata about songs and create XML files
     var $HTMLPage = $.parseHTML(this.HTMLPage);
 
-    // Get the playlist name
+    // Get the playlist name and URL
     playlistJSON.playlistName = $('#playlist-title', $HTMLPage).text();
+    playlistJSON.playlistURL = activeUrl;
 
     // Sometimes the HTML loads slowly (it's asynchronous, so even window.onload doesn't help),
     // so if we run the plugin too fast, the playlist will be empty. In that case let's wait a moment and call this function again.
@@ -141,7 +143,7 @@ var playlistManager = {
         // Reload the HTML
         onWindowLoad();
         // Re-parse the Grooveshark data
-        playlistManager.parseGrooveshark();
+        playlistManager.parseGrooveshark(activeUrl);
       }, 1000);
     } else {
 
