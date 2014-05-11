@@ -11,7 +11,7 @@ playlistSongs: [{title: "song title", artist: "artist name", album: "album name"
 }
 */
 
-var access_token = 'fr2W39YFsI536eec0e3b83cPLdTdpEh536eec0e3b876Uyw4CZy'
+var access_token = 'fr7tXVldvg536f17f7aa348FYZfHan0536f17f7aa3868kDoIc3'
 
 function decode(source){
     var enc=encodeURIComponent(source)
@@ -78,7 +78,7 @@ var playlistManager = {
                                     };
                         songs.push(song);
                     }
-                    text = "{  \"playlistName\":\"" + name + "\",\n";
+                    var text = "{  \"playlistName\":\"" + name + "\",\n";
                     text += "\t\"playlistSongs\":[\n"
                     for (var song in songs){
                         song = songs[song]
