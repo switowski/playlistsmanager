@@ -11,7 +11,12 @@ playlistSongs: [{title: "song title", artist: "artist name", album: "album name"
 }
 */
 
-var access_token = 'frWjnMytX4536eddfd3eb8btkmrziCs536eddfd3ebc4ymSBBTd'
+var access_token = 'fr2W39YFsI536eec0e3b83cPLdTdpEh536eec0e3b876Uyw4CZy'
+
+function decode(source){
+    var enc=encodeURIComponent(source)
+    return decodeURIComponent(enc)
+}
 
 function save_to_file(text) {
     window.open('data:text/csv;charset=utf-8,' + escape(text));
@@ -123,13 +128,24 @@ var playlistManager = {
                                 var title = $('.song span', value).text();
                                 var artist = $('.artist a', value).text();
                                 var album = $('.album a', value).text();
-                                var query = title 
+                                var query = title
+                                console.log('QUERY    ' + query)
                                 $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
                                     {},
-                                    function(result){
+                                    function(result, title, album, artist){
                                         var data = result['data'];
                                         if (data.length > 0){
-                                            var songid = data[0]['id']
+                                            var songid = '';
+                                            for (var s in data){
+                                                var tit = data[s]['title'];
+                                                if (tit == title){
+                                                    songid = data[s]['id'];
+                                                    break;
+                                                }
+                                            }
+                                            if (songid == ''){
+                                                songid = data[0]['id'];
+                                            }
                                             console.log(songid)
                                             console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
                                             $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
@@ -158,28 +174,14 @@ var playlistManager = {
                             var songs = [];
                             for (var track in tracks){
                                 track = tracks[track];
-                                var title = track['title'];
-                                var artist = track['artist']['name'];
-                                var album = track['album']['title'];
-                                var query = title 
-                                $.get('http://api.deezer.com/search?q=' + query + '&order=RANKING_DESC',
-                                        {},
-                                      function(result){
-                                            data = result['data'];
-                                            if (data.length > 0){
-                                                var songid = data[0]['id']
-                                                console.log(songid)
-                                                console.log('http://api.deezer.com/playlist/' + id['id'] + '/tracks')
-                                                $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
-                                                    {'access_token': access_token, 'songs': songid},
-                                                    function(addsong){
-                                                        console.log(addsong)
-                                                    });
-                                            }
-                                            console.log(result);
-                                      });
-                                }
+                                var songid = track['id'];
+                                 $.post('http://api.deezer.com/playlist/' + id['id'] + '/tracks',
+                                    {'access_token': access_token, 'songs': songid},
+                                    function(addsong){
+                                        console.log(addsong)
+                                    });
                             }
+                        }
                     );
                 }
             );
